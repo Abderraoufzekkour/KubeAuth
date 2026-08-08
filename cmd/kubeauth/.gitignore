@@ -1,0 +1,18 @@
+# Binary output
+bin/
+
+# Go
+*.exe
+*.test
+*.out
+
+# Dependencies
+vendor/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
