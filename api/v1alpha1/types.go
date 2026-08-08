@@ -12,10 +12,10 @@ type KeycloakGroupBinding struct {
 }
 
 type KeycloakGroupBindingSpec struct {
-	KeycloakGroup string     `json:"keycloakGroup"`
-	ClusterRole   string     `json:"clusterRole"`
-	Namespace     string     `json:"namespace,omitempty"`
-	GroupPrefix   string     `json:"groupPrefix,omitempty"`
+	KeycloakGroup string      `json:"keycloakGroup"`
+	ClusterRole   string      `json:"clusterRole"`
+	Namespace     string      `json:"namespace,omitempty"`
+	GroupPrefix   string      `json:"groupPrefix,omitempty"`
 	KeycloakRef   KeycloakRef `json:"keycloakRef"`
 }
 
