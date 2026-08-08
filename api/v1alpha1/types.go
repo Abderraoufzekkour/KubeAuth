@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type KeycloakGroupBinding struct {
@@ -9,6 +10,12 @@ type KeycloakGroupBinding struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	Spec              KeycloakGroupBindingSpec   `json:"spec,omitempty"`
 	Status            KeycloakGroupBindingStatus `json:"status,omitempty"`
+}
+
+func (in *KeycloakGroupBinding) DeepCopyObject() runtime.Object {
+	out := new(KeycloakGroupBinding)
+	*out = *in
+	return out
 }
 
 type KeycloakGroupBindingSpec struct {
@@ -34,6 +41,12 @@ type KeycloakGroupBindingList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []KeycloakGroupBinding `json:"items"`
+}
+
+func (in *KeycloakGroupBindingList) DeepCopyObject() runtime.Object {
+	out := new(KeycloakGroupBindingList)
+	*out = *in
+	return out
 }
 
 func init() {
