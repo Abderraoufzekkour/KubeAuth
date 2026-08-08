@@ -7,62 +7,103 @@ import (
 
 	"github.com/Abderraoufzekkour/KubeAuth/internal/controller"
 	"github.com/Abderraoufzekkour/KubeAuth/internal/keycloak"
+	"github.com/spf13/cobra"
 )
 
+var rootCmd = &cobra.Command{
+	Use:   "kubeauth",
+	Short: "KubeAuth - Production-grade Keycloak OIDC operator for Kubernetes",
+	Long: `KubeAuth automates the full Keycloak to Kubernetes authentication lifecycle.
+It bootstraps OIDC, syncs Keycloak groups to Kubernetes RBAC, and verifies
+tokens end-to-end — all in one tool.`,
+}
+
+var verifyCmd = &cobra.Command{
+	Use:   "verify",
+	Short: "Test OIDC flow and print token claims",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		url, _ := cmd.Flags().GetString("keycloak-url")
+		realm, _ := cmd.Flags().GetString("realm")
+		clientID, _ := cmd.Flags().GetString("client-id")
+		username, _ := cmd.Flags().GetString("username")
+		password, _ := cmd.Flags().GetString("password")
+
+		if url == "" || realm == "" {
+			return fmt.Errorf("--keycloak-url and --realm are required")
+		}
+
+		fmt.Println("-------------------------------------------")
+		fmt.Println("KubeAuth - OIDC Verification")
+		fmt.Println("-------------------------------------------")
+
+		cfg := keycloak.Config{
+			URL:      url,
+			Realm:    realm,
+			ClientID: clientID,
+		}
+
+		client, err := keycloak.New(context.Background(), cfg)
+		if err != nil {
+			return fmt.Errorf("connection failed: %w", err)
+		}
+
+		if err := client.VerifyOIDC(context.Background(), username, password); err != nil {
+			return fmt.Errorf("verification failed: %w", err)
+		}
+
+		fmt.Println("-------------------------------------------")
+		fmt.Println("Verification complete.")
+		fmt.Printf("Issuer URL : %s/realms/%s\n", url, realm)
+		fmt.Printf("Client ID  : %s\n", clientID)
+		fmt.Println("-------------------------------------------")
+		return nil
+	},
+}
+
+var operatorCmd = &cobra.Command{
+	Use:   "operator",
+	Short: "Run the KubeAuth Kubernetes operator",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		group, _ := cmd.Flags().GetString("group")
+		clusterRole, _ := cmd.Flags().GetString("cluster-role")
+		namespace, _ := cmd.Flags().GetString("namespace")
+		prefix, _ := cmd.Flags().GetString("prefix")
+
+		fmt.Println("-------------------------------------------")
+		fmt.Println("KubeAuth - Operator")
+		fmt.Println("-------------------------------------------")
+
+		r := controller.NewReconciler()
+		if err := r.Reconcile(context.Background(), group, clusterRole, namespace, prefix); err != nil {
+			return fmt.Errorf("reconcile failed: %w", err)
+		}
+
+		fmt.Println("-------------------------------------------")
+		fmt.Println("Operator reconcile complete.")
+		fmt.Println("-------------------------------------------")
+		return nil
+	},
+}
+
+func init() {
+	verifyCmd.Flags().String("keycloak-url", "", "Keycloak base URL (e.g. https://auth.example.com)")
+	verifyCmd.Flags().String("realm", "", "Keycloak realm name")
+	verifyCmd.Flags().String("client-id", "kubernetes", "Keycloak OIDC client ID")
+	verifyCmd.Flags().String("username", "", "Test username")
+	verifyCmd.Flags().String("password", "", "Test user password")
+
+	operatorCmd.Flags().String("group", "developers", "Keycloak group to sync")
+	operatorCmd.Flags().String("cluster-role", "view", "Kubernetes ClusterRole to bind")
+	operatorCmd.Flags().String("namespace", "", "Namespace for RoleBinding (empty = ClusterRoleBinding)")
+	operatorCmd.Flags().String("prefix", "oidc:", "Group prefix for RBAC subject")
+
+	rootCmd.AddCommand(verifyCmd)
+	rootCmd.AddCommand(operatorCmd)
+}
+
 func main() {
-	if len(os.Args) < 2 {
-		printHelp()
-		os.Exit(0)
-	}
-
-	switch os.Args[1] {
-	case "verify":
-		runVerify()
-	case "operator":
-		runOperator()
-	case "--help", "help":
-		printHelp()
-	default:
-		fmt.Printf("Unknown command: %s\n", os.Args[1])
-		printHelp()
-		os.Exit(1)
-	}
-}
-
-func printHelp() {
-	fmt.Println("KubeAuth - Production-grade Keycloak OIDC operator for Kubernetes")
-	fmt.Println("")
-	fmt.Println("Usage:")
-	fmt.Println("  kubeauth verify     Test OIDC flow and print token claims")
-	fmt.Println("  kubeauth operator   Run the Kubernetes operator")
-	fmt.Println("  kubeauth help       Show this help message")
-}
-
-func runVerify() {
-	cfg := keycloak.Config{
-		URL:      "https://auth.example.com",
-		Realm:    "myrealm",
-		ClientID: "kubernetes",
-	}
-
-	client, err := keycloak.New(context.Background(), cfg)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	if err := client.VerifyOIDC(context.Background(), "testuser", "testpass"); err != nil {
-		fmt.Printf("Verification failed: %v\n", err)
-		os.Exit(1)
-	}
-}
-
-func runOperator() {
-	fmt.Println("Starting KubeAuth operator...")
-	r := controller.NewReconciler()
-	err := r.Reconcile(context.Background(), "developers", "view", "", "oidc:")
-	if err != nil {
-		fmt.Printf("Reconcile error: %v\n", err)
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
 }
