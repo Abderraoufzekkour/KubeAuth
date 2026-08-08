@@ -1,5 +1,7 @@
 # KubeAuth
 
+[![CI](https://github.com/Abderraoufzekkour/KubeAuth/actions/workflows/ci.yaml/badge.svg)](https://github.com/Abderraoufzekkour/KubeAuth/actions/workflows/ci.yaml)
+
 Production-grade Keycloak OIDC operator for Kubernetes.
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
