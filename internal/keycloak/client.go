@@ -24,8 +24,8 @@ func New(ctx context.Context, cfg Config) (*Client, error) {
 }
 
 func (c *Client) VerifyOIDC(ctx context.Context, username, password string) error {
-	fmt.Printf("✅ Verifying OIDC for user: %s\n", username)
-	fmt.Printf("   Issuer  : %s/realms/%s\n", c.cfg.URL, c.cfg.Realm)
-	fmt.Printf("   Client  : %s\n", c.cfg.ClientID)
+	fmt.Printf("Verifying OIDC for user: %s\n", username)
+	fmt.Printf("Issuer: %s/realms/%s\n", c.cfg.URL, c.cfg.Realm)
+	fmt.Printf("Client: %s\n", c.cfg.ClientID)
 	return nil
 }
